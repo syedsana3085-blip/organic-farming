@@ -1,0 +1,6 @@
+{
+  "name": "Organic Farming – Green Future",
+  "description": "Community Service Project (CSP) educational website and interactive agricultural dashboard on Organic Farming – Sustainable Agriculture for a Healthy Future.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
