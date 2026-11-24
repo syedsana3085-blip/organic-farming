@@ -1,0 +1,282 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Private user account profile stored by authenticated UID. Passwords are never stored in Firestore; Firebase Auth manages salted password hashing.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Authentication user ID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254,
+          "description": "Registered user email address."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "User display name."
+        },
+        "username": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 30,
+          "pattern": "^[a-zA-Z0-9._\\-]+$",
+          "description": "User handle."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["member", "admin"],
+          "description": "Account access role; new sign-ups always start as member."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when account record was created."
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of the user's most recent sign-in."
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt", "lastLoginAt"]
+    },
+    "SurveyEntry": {
+      "title": "SurveyEntry",
+      "description": "Farmer field survey entry owned by a specific authenticated user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the user who recorded this survey entry."
+        },
+        "respondentLabel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Farmer name or anonymous respondent label."
+        },
+        "villageOrMandal": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Village or mandal name."
+        },
+        "primaryCrop": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Primary crop cultivated."
+        },
+        "currentPractice": {
+          "type": "string",
+          "enum": ["Conventional", "Mixed / Transitioning", "Organic / Natural"],
+          "description": "Current cultivation practice reported."
+        },
+        "awareOfOrganic": {
+          "type": "string",
+          "enum": ["Yes", "Partially", "No"],
+          "description": "Awareness of organic farming."
+        },
+        "mainChallenge": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Main problem reported by the farmer."
+        },
+        "opinionOnOrganic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 600,
+          "description": "Farmer opinion on organic products and transition."
+        },
+        "isSample": {
+          "type": "boolean",
+          "description": "Whether this entry is a sample placeholder."
+        },
+        "submittedAt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Human-readable date label."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when saved."
+        }
+      },
+      "required": [
+        "ownerId",
+        "respondentLabel",
+        "villageOrMandal",
+        "primaryCrop",
+        "currentPractice",
+        "awareOfOrganic",
+        "mainChallenge",
+        "opinionOnOrganic",
+        "isSample",
+        "submittedAt",
+        "createdAt"
+      ]
+    },
+    "ActivityWeek": {
+      "title": "ActivityWeek",
+      "description": "Editable 6-week Community Service Project log entry owned by the authenticated user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "week": {
+          "type": "number"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "focus": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "hours": {
+          "type": "number"
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "week",
+        "title",
+        "focus",
+        "description",
+        "hours",
+        "location",
+        "updatedAt"
+      ]
+    },
+    "PortalSettings": {
+      "title": "PortalSettings",
+      "description": "Customizable college and student project metadata owned by the authenticated user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "projectTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "tagline": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "collegeName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "department": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "studentName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "rollNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "mentorName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "academicYear": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "districtOrCity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "projectTitle",
+        "tagline",
+        "collegeName",
+        "department",
+        "studentName",
+        "rollNumber",
+        "mentorName",
+        "academicYear",
+        "districtOrCity",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Private user account profile keyed by Firebase Auth UID."
+    },
+    "/users/{userId}/surveyEntries/{entryId}": {
+      "schema": { "$ref": "#/entities/SurveyEntry" },
+      "description": "Authenticated user's farmer survey responses."
+    },
+    "/users/{userId}/activityWeeks/{weekId}": {
+      "schema": { "$ref": "#/entities/ActivityWeek" },
+      "description": "Authenticated user's 6-week activity log entries."
+    },
+    "/users/{userId}/portalSettings/{settingId}": {
+      "schema": { "$ref": "#/entities/PortalSettings" },
+      "description": "Authenticated user's project metadata settings."
+    }
+  }
+}

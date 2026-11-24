@@ -34,11 +34,15 @@ import { QuizFaqSection } from './components/QuizFaqSection';
 import { AgroGuideChat } from './components/AgroGuideChat';
 import { ProjectSettingsModal } from './components/ProjectSettingsModal';
 import { Footer } from './components/Footer';
+import { SimpleLoginPage } from './components/SimpleLoginPage';
+import { WelcomeSessionBar } from './components/WelcomeSessionBar';
 
 const STORAGE_KEYS = {
   survey: 'csp_organic_survey_v1',
   activity: 'csp_organic_activity_v1',
   metadata: 'csp_organic_metadata_v1',
+  activeUsername: 'csp_active_username_v1',
+  rememberedUsername: 'csp_remembered_username_v1',
 };
 
 function loadFromStorage<T>(key: string, fallback: T): T {
@@ -52,6 +56,13 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 }
 
 export default function App() {
+  const [activeUsername, setActiveUsername] = useState<string | null>(() =>
+    loadFromStorage<string | null>(STORAGE_KEYS.activeUsername, null)
+  );
+  const [rememberedUsername, setRememberedUsername] = useState<string>(() =>
+    loadFromStorage<string>(STORAGE_KEYS.rememberedUsername, '')
+  );
+
   const [activeSection, setActiveSection] = useState<SectionId>('home');
   const [chatOpen, setChatOpen] = useState(false);
   const [settingsModal, setSettingsModal] = useState<{
@@ -92,6 +103,31 @@ export default function App() {
       // Ignore storage quota errors gracefully
     }
   }, [metadata]);
+
+  const handleLoginSuccess = (username: string) => {
+    setActiveUsername(username);
+    setRememberedUsername(username);
+    setActiveSection('home');
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.activeUsername, JSON.stringify(username));
+      window.localStorage.setItem(STORAGE_KEYS.rememberedUsername, JSON.stringify(username));
+    } catch {
+      // Ignore storage quota errors gracefully
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLogout = () => {
+    setActiveUsername(null);
+    setChatOpen(false);
+    setSettingsModal((prev) => ({ ...prev, open: false }));
+    setActiveSection('home');
+    try {
+      window.localStorage.removeItem(STORAGE_KEYS.activeUsername);
+    } catch {
+      // Ignore storage errors gracefully
+    }
+  };
 
   const handleNavigate = (section: SectionId) => {
     setActiveSection(section);
@@ -144,6 +180,15 @@ export default function App() {
     setActivityWeeks(INITIAL_ACTIVITY_WEEKS);
   };
 
+  if (!activeUsername) {
+    return (
+      <SimpleLoginPage
+        rememberedUsername={rememberedUsername}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFBF9] text-[#1A241B]">
       <Navbar
@@ -152,6 +197,8 @@ export default function App() {
         onOpenDashboard={handleOpenDashboard}
         onOpenChat={() => setChatOpen(true)}
       />
+
+      <WelcomeSessionBar username={activeUsername} onLogout={handleLogout} />
 
       {/* Contextual Section Bar when viewing interior project sections */}
       {activeSection !== 'home' && (

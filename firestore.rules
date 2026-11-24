@@ -1,0 +1,251 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core helper primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (request.auth.token.email == 'syedzakeeramrin@gmail.com' &&
+         request.auth.token.email_verified == true)
+      );
+    }
+
+    function isValidEmailString(email) {
+      return email is string &&
+        email.size() >= 3 &&
+        email.size() <= 254 &&
+        email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$');
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'createdAt', 'lastLoginAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'role', 'createdAt', 'lastLoginAt', 'fullName', 'username']) &&
+        data.uid is string && data.uid == userId && isValidId(data.uid) &&
+        isValidEmailString(data.email) &&
+        data.role in ['member', 'admin'] &&
+        data.createdAt is timestamp &&
+        data.lastLoginAt is timestamp &&
+        (!('fullName' in data) || (data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 80)) &&
+        (!('username' in data) || (data.username is string && data.username.size() >= 3 && data.username.size() <= 30 && data.username.matches('^[a-zA-Z0-9._\\-]+$')));
+    }
+
+    function isValidSurveyEntry(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'respondentLabel', 'villageOrMandal', 'primaryCrop',
+          'currentPractice', 'awareOfOrganic', 'mainChallenge',
+          'opinionOnOrganic', 'isSample', 'submittedAt', 'createdAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'respondentLabel', 'villageOrMandal', 'primaryCrop',
+          'currentPractice', 'awareOfOrganic', 'mainChallenge',
+          'opinionOnOrganic', 'isSample', 'submittedAt', 'createdAt'
+        ]) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.respondentLabel is string && data.respondentLabel.size() >= 1 && data.respondentLabel.size() <= 120 &&
+        data.villageOrMandal is string && data.villageOrMandal.size() >= 1 && data.villageOrMandal.size() <= 120 &&
+        data.primaryCrop is string && data.primaryCrop.size() >= 1 && data.primaryCrop.size() <= 120 &&
+        data.currentPractice in ['Conventional', 'Mixed / Transitioning', 'Organic / Natural'] &&
+        data.awareOfOrganic in ['Yes', 'Partially', 'No'] &&
+        data.mainChallenge is string && data.mainChallenge.size() >= 1 && data.mainChallenge.size() <= 300 &&
+        data.opinionOnOrganic is string && data.opinionOnOrganic.size() >= 1 && data.opinionOnOrganic.size() <= 600 &&
+        data.isSample is bool &&
+        data.submittedAt is string && data.submittedAt.size() >= 1 && data.submittedAt.size() <= 64 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidActivityWeek(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'week', 'title', 'focus', 'description',
+          'hours', 'location', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'week', 'title', 'focus', 'description',
+          'hours', 'location', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.week is number && data.week >= 1 && data.week <= 6 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        data.focus is string && data.focus.size() >= 1 && data.focus.size() <= 160 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
+        data.hours is number && data.hours >= 0 && data.hours <= 100 &&
+        data.location is string && data.location.size() >= 1 && data.location.size() <= 120 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPortalSettings(data, userId) {
+      return data.keys().hasAll([
+          'ownerId', 'projectTitle', 'tagline', 'collegeName', 'department',
+          'studentName', 'rollNumber', 'mentorName', 'academicYear',
+          'districtOrCity', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'projectTitle', 'tagline', 'collegeName', 'department',
+          'studentName', 'rollNumber', 'mentorName', 'academicYear',
+          'districtOrCity', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId == userId && isValidId(data.ownerId) &&
+        data.projectTitle is string && data.projectTitle.size() >= 1 && data.projectTitle.size() <= 120 &&
+        data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 160 &&
+        data.collegeName is string && data.collegeName.size() >= 1 && data.collegeName.size() <= 160 &&
+        data.department is string && data.department.size() >= 1 && data.department.size() <= 120 &&
+        data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 120 &&
+        data.rollNumber is string && data.rollNumber.size() >= 1 && data.rollNumber.size() <= 64 &&
+        data.mentorName is string && data.mentorName.size() >= 1 && data.mentorName.size() <= 120 &&
+        data.academicYear is string && data.academicYear.size() >= 1 && data.academicYear.size() <= 32 &&
+        data.districtOrCity is string && data.districtOrCity.size() >= 1 && data.districtOrCity.size() <= 120 &&
+        data.updatedAt is timestamp;
+    }
+
+    // Connection test document (read-only ping for startup health check)
+    match /test/connection {
+      allow get: if true;
+      allow write: if false;
+    }
+
+    // Admin registry (read-only for owner/admin; managed out-of-band)
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list, write: if false;
+    }
+
+    // User Account Profile (PII strictly isolated to owner or verified admin)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isValidId(userId) &&
+        isOwner(userId) &&
+        isValidUserAccount(incoming(), userId) &&
+        incoming().uid == request.auth.uid &&
+        incoming().role == 'member' &&
+        incoming().createdAt == request.time &&
+        incoming().lastLoginAt == request.time;
+
+      allow update: if isValidId(userId) &&
+        isValidUserAccount(incoming(), userId) && (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().uid == existing().uid &&
+            incoming().role == existing().role &&
+            incoming().createdAt == existing().createdAt &&
+            incoming().lastLoginAt == request.time &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['lastLoginAt', 'email', 'fullName', 'username'])
+          )
+        );
+
+      allow delete: if isValidId(userId) && isAdmin();
+
+      // Master-gated subcollection: Survey Entries
+      match /surveyEntries/{entryId} {
+        allow get: if isValidId(userId) && isValidId(entryId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+        allow create: if isValidId(userId) && isValidId(entryId) &&
+          isOwner(userId) &&
+          isValidSurveyEntry(incoming(), userId) &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId) && isValidId(entryId) &&
+          isValidSurveyEntry(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'respondentLabel', 'villageOrMandal', 'primaryCrop',
+                'currentPractice', 'awareOfOrganic', 'mainChallenge',
+                'opinionOnOrganic', 'isSample', 'submittedAt'
+              ])
+            )
+          );
+
+        allow delete: if isValidId(userId) && isValidId(entryId) && (isOwner(userId) || isAdmin());
+      }
+
+      // Master-gated subcollection: 6-Week Activity Log
+      match /activityWeeks/{weekId} {
+        allow get: if isValidId(userId) && isValidId(weekId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+        allow create: if isValidId(userId) && isValidId(weekId) &&
+          isOwner(userId) &&
+          isValidActivityWeek(incoming(), userId) &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId) && isValidId(weekId) &&
+          isValidActivityWeek(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().week == existing().week &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'focus', 'description', 'hours', 'location', 'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isValidId(userId) && isValidId(weekId) && (isOwner(userId) || isAdmin());
+      }
+
+      // Master-gated subcollection: Portal Metadata Settings
+      match /portalSettings/{settingId} {
+        allow get: if isValidId(userId) && isValidId(settingId) && (isOwner(userId) || isAdmin());
+        allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+        allow create: if isValidId(userId) && isValidId(settingId) &&
+          isOwner(userId) &&
+          isValidPortalSettings(incoming(), userId) &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId) && isValidId(settingId) &&
+          isValidPortalSettings(incoming(), userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().updatedAt == request.time && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'projectTitle', 'tagline', 'collegeName', 'department',
+                'studentName', 'rollNumber', 'mentorName', 'academicYear',
+                'districtOrCity', 'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isValidId(userId) && isValidId(settingId) && (isOwner(userId) || isAdmin());
+      }
+    }
+  }
+}
